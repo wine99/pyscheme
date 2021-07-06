@@ -2,6 +2,7 @@
 exp -> int
      | float
      | str
+     | bool
      | the_empty_list
      | Symbol
      | Pair (list of <exp>)
@@ -41,12 +42,12 @@ def meval(exp, env):
         return mapply(meval(operator(exp), env),
                       [meval(e, env) for e in operands(exp)])
     else:
-        return "Unknown expression type -- MEVAL"
+        raise Exception("Unknown expression type")
 
 
 def mapply(procedure, arguments):
     if is_primitive_procedure(procedure):
-        procedure.underlying_primitive_proc(*arguments)
+        return procedure.underlying_primitive_proc(*arguments)
     elif is_compound_procedure(procedure):
         new_env = extend_environment(procedure.parameters,
                                      arguments,
@@ -79,6 +80,7 @@ def is_self_evaluating(exp):
     return isinstance(exp, int) or \
            isinstance(exp, float) or \
            isinstance(exp, str) or \
+           isinstance(exp, bool) or \
            is_null(exp)
 
 
