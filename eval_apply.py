@@ -2,14 +2,17 @@
 exp -> int
      | float
      | str
-     | symbol
-     | pair (list of <exp>)
+     | the_empty_list
+     | Symbol
+     | Pair (list of <exp>)
 '''
 
-from scheme_types import Symbol, Pair, the_empty_list, is_null
+from scheme_types import Symbol, Pair, the_empty_list
+from scheme_types import is_null, is_true
 from scheme_types import PrimitiveProcedure, CompoundProcedure
-from scheme_env import lookup_variable_value, set_variable_value, \
-    define_variable, extend_environment
+from scheme_env import lookup_variable_value
+from scheme_env import set_variable_value, define_variable
+from scheme_env import extend_environment
 
 
 def meval(exp, env):
@@ -52,7 +55,7 @@ def mapply(procedure, arguments):
 
 
 def eval_if(exp, env):
-    if meval(if_predicate(exp), env):
+    if is_true(meval(if_predicate(exp), env)):
         return meval(if_consequent(exp), env)
     else:
         return meval(if_alternative(exp), env)
@@ -75,7 +78,8 @@ def eval_definition(exp, env):
 def is_self_evaluating(exp):
     return isinstance(exp, int) or \
            isinstance(exp, float) or \
-           isinstance(exp, str)
+           isinstance(exp, str) or \
+           is_null(exp)
 
 
 def is_variable(exp):
@@ -152,7 +156,7 @@ def if_alternative(exp):
     if is_null(exp.cdr.cdr.cdr):
         return exp.cdr.cdr.cdr.car
     else:
-        return Symbol('true')
+        return Symbol('false')
 
 def make_if(predicate, consequent, alternative):
     return Pair(Symbol('if'),

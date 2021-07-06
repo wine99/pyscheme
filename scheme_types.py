@@ -55,3 +55,16 @@ class CompoundProcedure():
 
     def __repr__(self) -> str:
         return "Compound procedure"
+
+
+"""
+Only False is false
+"""
+def is_true(val):
+    if val == 0:
+        return True
+    if val == "":
+        return True
+    if is_null(val):
+        return True
+    return bool(val)
