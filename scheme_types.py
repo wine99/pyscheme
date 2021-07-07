@@ -6,7 +6,7 @@ class Symbol:
         return self.name
 
     def __eq__(self, o: object) -> bool:
-        return self.name == o.name
+        return isinstance(o, Symbol) and self.name == o.name
 
     def __hash__(self) -> int:
         return self.name.__hash__()
@@ -36,7 +36,7 @@ class Pair:
             pair = pair.cdr
 
     def __repr__(self) -> str:
-        return '(' + ' '.join([str(e) for e in list(self)]) + ')'
+        return '(' + ' '.join([str(e) for e in self]) + ')'
 
 
 class PrimitiveProcedure():

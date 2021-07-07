@@ -15,44 +15,48 @@ from scheme_env import lookup_variable_value
 from scheme_env import set_variable_value, define_variable
 from scheme_env import extend_environment
 
+from buffered_stream import BufferedStream
+from scheme_read import scheme_read
+
 
 def meval(exp, env):
     # primitives
     if is_self_evaluating(exp):
         return exp
-    elif is_variable(exp):
+    if is_variable(exp):
         return lookup_variable_value(exp, env)
     # special forms
-    elif is_quoted(exp):
+    if is_quoted(exp):
         return text_of_quotation(exp)
-    elif is_assignment(exp):
+    if is_assignment(exp):
         return eval_assignment(exp, env)
-    elif is_definition(exp):
+    if is_definition(exp):
         return eval_definition(exp, env)
-    elif is_if(exp):
+    if is_if(exp):
         return eval_if(exp, env)
-    elif is_lambda(exp):
+    if is_lambda(exp):
         return make_procedure(lambda_parameters(exp), lambda_body(exp), env)
-    elif is_begin(exp):
+    if is_begin(exp):
         return [meval(e, env) for e in begin_actions(exp)][-1]
-    # elif is_cond(exp):
+    # if is_cond(exp):
     #     return meval(cond_to_if(exp), env)
     # combinations
-    elif is_application(exp):
+    if is_load(exp):
+        return eval_load(exp, env)
+    if is_application(exp):
         return mapply(meval(operator(exp), env),
                       [meval(e, env) for e in operands(exp)])
-    else:
-        raise Exception("Unknown expression type")
+    raise Exception("Unknown expression type")
 
 
 def mapply(procedure, arguments):
     if is_primitive_procedure(procedure):
-        return procedure.underlying_primitive_proc(*arguments)
+        return primitive_proc_underlying_proc(procedure)(*arguments)
     elif is_compound_procedure(procedure):
-        new_env = extend_environment(procedure.parameters,
+        new_env = extend_environment(procedure_parameters(procedure),
                                      arguments,
-                                     procedure.environment)
-        return [meval(e, new_env) for e in procedure.body][-1]
+                                     procedure_environment(procedure))
+        return [meval(e, new_env) for e in procedure_body(procedure)][-1]
 
 
 def eval_if(exp, env):
@@ -204,8 +208,27 @@ def operands(exp):
 # TODO cond
 
 
+def is_load(exp):
+    return exp.car == Symbol('load')
+
+def eval_load(exp, env):
+    result = 'ok'
+    with open(load_filename(exp), 'r') as file:
+        f = BufferedStream(file)
+        while f.peek():
+            result = meval(scheme_read(f), env)
+            f.remove_whitespace()
+    return result
+
+def load_filename(exp):
+    return exp.cdr.car
+
+
 def is_primitive_procedure(proc):
     return isinstance(proc, PrimitiveProcedure)
+
+def primitive_proc_underlying_proc(proc: PrimitiveProcedure):
+    return proc.underlying_primitive_proc
 
 
 def make_procedure(params, body, env):
@@ -214,11 +237,11 @@ def make_procedure(params, body, env):
 def is_compound_procedure(proc):
     return isinstance(proc, CompoundProcedure)
 
-def procedure_parameters(proc):
+def procedure_parameters(proc: CompoundProcedure):
     return proc.parameters
 
-def procedure_body(proc):
+def procedure_body(proc: CompoundProcedure):
     return proc.body
 
-def procedure_environment(proc):
-    return proc.env
+def procedure_environment(proc: CompoundProcedure):
+    return proc.environment
