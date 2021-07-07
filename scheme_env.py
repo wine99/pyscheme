@@ -65,7 +65,7 @@ def setup_environment():
         Symbol('>'): PrimitiveProcedure(lambda a, b: a > b),
         Symbol('<='): PrimitiveProcedure(lambda a, b: a <= b),
         Symbol('>='): PrimitiveProcedure(lambda a, b: a >= b),
-        Symbol('=='): PrimitiveProcedure(lambda a, b: a == b),
+        Symbol('='): PrimitiveProcedure(lambda a, b: a == b),
         Symbol('not'): PrimitiveProcedure(scheme_not),
         Symbol('and'): PrimitiveProcedure(scheme_and),
         Symbol('or'): PrimitiveProcedure(scheme_or),
