@@ -13,17 +13,15 @@ class Environment:
 the_empty_environment = None
 
 
-def extend_environment(params: Pair, args: Pair, base: Environment):
+def extend_environment(params: list, args: list, base: Environment):
     """
     @param params: list of Symbols
     """
-    param_list = [param for param in params]
-    arg_list = [arg for arg in args]
-    if len(param_list) < len(arg_list):
+    if len(params) < len(args):
         raise Exception("Too many arguments")
-    elif len(param_list) > len(arg_list):
+    elif len(params) > len(args):
         raise Exception("Too few arguments")
-    return Environment(dict(zip(param_list, arg_list)), base)
+    return Environment(dict(zip(params, args)), base)
 
 
 def lookup_variable_value(var: Symbol, env: Environment):
@@ -71,6 +69,7 @@ def setup_environment():
         Symbol('not'): PrimitiveProcedure(scheme_not),
         Symbol('and'): PrimitiveProcedure(scheme_and),
         Symbol('or'): PrimitiveProcedure(scheme_or),
+        Symbol('exit'): PrimitiveProcedure(lambda: exit())
     }
     global_environment.bindings = global_bindings
     return global_environment

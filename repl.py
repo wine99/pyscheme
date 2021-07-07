@@ -14,9 +14,9 @@ def driver_loop():
             result = meval(scheme_read(f), the_global_environment)
             print(';==>', result)
         except Exception as e:
-            print(e)
+            print("Error:", e)
         except KeyboardInterrupt:
-            return
+            exit()
 
 
 if __name__ == '__main__':

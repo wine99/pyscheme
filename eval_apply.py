@@ -10,6 +10,7 @@ exp -> int
 
 from scheme_types import Symbol, Pair, the_empty_list
 from scheme_types import is_null, is_true
+from scheme_types import list_to_pair, pair_to_list
 from scheme_types import PrimitiveProcedure, CompoundProcedure
 from scheme_env import lookup_variable_value
 from scheme_env import set_variable_value, define_variable
@@ -32,30 +33,33 @@ def meval(exp, env):
         return eval_assignment(exp, env)
     if is_definition(exp):
         return eval_definition(exp, env)
-    if is_if(exp):
-        return eval_if(exp, env)
     if is_lambda(exp):
         return make_procedure(lambda_parameters(exp), lambda_body(exp), env)
+    if is_if(exp):
+        return eval_if(exp, env)
     if is_begin(exp):
         return [meval(e, env) for e in begin_actions(exp)][-1]
-    # if is_cond(exp):
-    #     return meval(cond_to_if(exp), env)
-    # combinations
+    if is_cond(exp):
+        return meval(cond_to_if(exp), env)
+    if is_let(exp):
+        return meval(let_to_combination(exp), env)
     if is_load(exp):
         return eval_load(exp, env)
+    # combinations
     if is_application(exp):
         return mapply(meval(operator(exp), env),
-                      [meval(e, env) for e in operands(exp)])
+                      [meval(e, env) for e in pair_to_list(operands(exp))])
     raise Exception("Unknown expression type")
 
 
-def mapply(procedure, arguments):
+def mapply(procedure, arguments: list):
     if is_primitive_procedure(procedure):
         return primitive_proc_underlying_proc(procedure)(*arguments)
     elif is_compound_procedure(procedure):
-        new_env = extend_environment(procedure_parameters(procedure),
-                                     arguments,
-                                     procedure_environment(procedure))
+        new_env = extend_environment(
+            pair_to_list(procedure_parameters(procedure)),
+            arguments,
+            procedure_environment(procedure))
         return [meval(e, new_env) for e in procedure_body(procedure)][-1]
 
 
@@ -146,6 +150,8 @@ def lambda_body(exp):
     return exp.cdr.cdr
 
 def make_lambda(params, body):
+    if is_null(body):
+        raise Exception("Procedure has no body")
     return Pair(Symbol('lambda'), Pair(params, body))
 
 
@@ -159,10 +165,10 @@ def if_consequent(exp):
     return exp.cdr.cdr.car
 
 def if_alternative(exp):
-    if is_null(exp.cdr.cdr.cdr):
+    if not is_null(exp.cdr.cdr.cdr):
         return exp.cdr.cdr.cdr.car
     else:
-        return Symbol('false')
+        return False
 
 def make_if(predicate, consequent, alternative):
     return Pair(Symbol('if'),
@@ -195,6 +201,63 @@ def sequence_to_exp(seq):
         return Pair(Symbol('begin'), seq)
 
 
+def is_cond(exp):
+    return exp.car == Symbol('cond')
+
+def cond_to_if(exp):
+    return expand_clauses(cond_clauses(exp))
+
+def expand_clauses(clauses):
+    if is_null(clauses):
+        # No else clause
+        return False
+    first = clauses.car
+    rest = clauses.cdr
+    if is_cond_else_clause(first):
+        if not is_null(rest):
+            raise Exception("Else clause is not the last")
+        return sequence_to_exp(cond_actions(first))
+    return make_if(cond_predicate(first),
+                   sequence_to_exp(cond_actions(first)),
+                   expand_clauses(rest))
+
+def cond_clauses(exp):
+    return exp.cdr
+
+def cond_predicate(clause):
+    return clause.car
+
+def cond_actions(clause):
+    return clause.cdr
+
+def is_cond_else_clause(clause):
+    return cond_predicate(clause) == Symbol('else')
+
+
+def is_let(exp):
+    return exp.car == Symbol('let')
+
+def let_to_combination(exp):
+    return Pair(make_lambda(let_vars(exp), let_body(exp)),
+                let_vals(exp))
+
+def let_bindings(exp):
+    if is_null(exp.cdr.car):
+        raise Exception("Let has no bindings")
+    return exp.cdr.car
+
+def let_body(exp):
+    if is_null(exp.cdr.cdr):
+        raise Exception("Let has no body")
+    return exp.cdr.cdr
+
+def let_vars(exp):
+    return list_to_pair([binding.car for binding in let_bindings(exp)])
+
+def let_vals(exp):
+    return list_to_pair([binding.cdr.car for binding in let_bindings(exp)])
+
+
 def is_application(exp):
     return isinstance(exp, Pair)
 
@@ -203,9 +266,6 @@ def operator(exp):
 
 def operands(exp):
     return exp.cdr
-
-
-# TODO cond
 
 
 def is_load(exp):
@@ -241,6 +301,8 @@ def procedure_parameters(proc: CompoundProcedure):
     return proc.parameters
 
 def procedure_body(proc: CompoundProcedure):
+    if is_null(proc.body):
+        raise Exception("Procedure has no body")
     return proc.body
 
 def procedure_environment(proc: CompoundProcedure):

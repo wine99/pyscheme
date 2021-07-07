@@ -30,8 +30,6 @@ class BufferedStream:
                 c = self.getc()
                 while c and c != '\n':
                     c = self.getc()
-                # TODO required?
-                self.ungetc(c)
             else:
                 self.ungetc(c)
                 break

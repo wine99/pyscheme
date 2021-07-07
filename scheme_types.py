@@ -60,7 +60,9 @@ class CompoundProcedure():
 """
 Only False is false
 """
-def is_true(val):
+def is_true(val) -> bool:
+    if isinstance(val, bool):
+        return val
     if val == 0:
         return True
     if val == "":
@@ -68,3 +70,15 @@ def is_true(val):
     if is_null(val):
         return True
     return bool(val)
+
+
+def pair_to_list(p: Pair) -> list:
+    if is_null(p):
+        return []
+    return list(p)
+
+
+def list_to_pair(lst: list) -> Pair:
+    if not len(lst):
+        return the_empty_list
+    return Pair(lst[0], list_to_pair(lst[1:]))
