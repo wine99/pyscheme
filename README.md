@@ -5,6 +5,7 @@ Basically line to line translation from the code of meta-circular evaluator in s
 
 **NB:**
 
+- **AND and OR is wrong, they should not be procedures!**
 - do not support rational
 - do not use `'...`, use `(quote ...)`
 - `#t` is a primitive True Value, while `true` is a global variable with True value, same for `#f` and `false`
