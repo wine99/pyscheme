@@ -1,5 +1,5 @@
 import math
-from scheme_types import Symbol, Pair, the_empty_list
+from scheme_types import Symbol, Pair, is_null, the_empty_list
 from scheme_types import PrimitiveProcedure
 from primitive_procedures import scheme_not, scheme_and, scheme_or
 
@@ -54,6 +54,7 @@ def setup_environment():
         Symbol('true'): True,
         Symbol('false'): False,
         Symbol('nil'): the_empty_list,
+        Symbol('null?'): PrimitiveProcedure(is_null),
         Symbol('car'): PrimitiveProcedure(lambda pair: pair.car),
         Symbol('cdr'): PrimitiveProcedure(lambda pair: pair.cdr),
         Symbol('cons'): PrimitiveProcedure(lambda a, b: Pair(a, b)),

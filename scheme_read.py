@@ -36,7 +36,7 @@ def read_character(f: BufferedStream) -> str:
     if c == 'n' and next_c == 'e':
         read_expected_string(f, "ewline", c)
         return '\n'
-    if next_c != ' ' or next_c != '\n' or next_c != ';':
+    if not (next_c == ' ' or next_c == '\n' or next_c == ';'):
         raise Exception(f"Invalid character {c}{next_c}...")
     return c
 
